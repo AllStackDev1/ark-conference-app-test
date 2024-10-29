@@ -9,7 +9,6 @@ import ErrorPage from "./error-page";
 const router = createBrowserRouter([
 
   {
-    // @ts-expect-error ignore
     children,
     path: "/",
     element: <App />,
