@@ -15,7 +15,7 @@ const defaultOpenRoute = "/login";
 const defaultClosedRoute = "/home";
 
 const openedRoutes = authRouters.children.map(({ path }) => path);
-const closedRoutes = dashboardRouters.children.map(({ path }) => path.split("/")[0]);
+const closedRoutes = dashboardRouters?.children?.map(({ path }) => path?.split("/")[0]);
 
 function App() {
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ function App() {
 
   useEffect(() => {
     if (accessToken) {
-      if (closedRoutes.includes(currentPage)) {
+      if (closedRoutes?.includes(currentPage)) {
         navigate(pathname);
       } else {
         navigate(defaultClosedRoute);
