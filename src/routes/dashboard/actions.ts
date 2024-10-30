@@ -44,12 +44,26 @@ export const conferenceRegistrationAction = async (
 };
 
 export const joinToConversationAction = async (
-  attendeeId: string,
+  userId: string,
   talkId: string
 ) => {
   useConferenceStore.setState({ talkId, isJoiningChat: true });
 
-  joinToConversation(attendeeId, talkId)
+  const attendee = useConferenceStore
+    .getState()
+    .conference?.attendees.find((attendee) => attendee.userId === userId);
+
+  if (!attendee?.id) {
+    useConferenceStore.setState({
+      status: false,
+      message: attendee?.id
+        ? "Something went wrong."
+        : "You are not an attendee to this conference, please register to engage in it.",
+    });
+    return null;
+  }
+
+  joinToConversation(attendee?.id, talkId)
     .then(({ data, message }) => {
       if (data) {
         useConferenceStore.setState({
@@ -178,25 +192,11 @@ export async function conferenceRouteAction({ request }: ActionFunctionArgs) {
   const location = formData.get("location")?.toString();
   const conferenceId = formData.get("conference_id")?.toString();
 
-  const attendee = useConferenceStore
-    .getState()
-    .conference?.attendees.find((attendee) => attendee.userId === userId);
-
-  if (!attendee?.id) {
-    useConferenceStore.setState({
-      status: false,
-      message: attendee?.id
-        ? "Something went wrong."
-        : "You are not an attendee to this conference, please register to engage in it.",
-    });
-    return null;
-  }
-
   switch (formId) {
     case "conference-registration":
       return conferenceRegistrationAction(userId, conferenceId);
     case "join-conversation":
-      return joinToConversationAction(attendee.id, talkId!);
+      return joinToConversationAction(userId!, talkId!);
     case "add-talk-to-conference":
       return addTalkToConferenceAction(conferenceId!, {
         topic,
