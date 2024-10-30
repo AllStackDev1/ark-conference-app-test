@@ -1,7 +1,11 @@
 import { Link, Form } from "react-router-dom";
+import { Button } from "src/components";
+import { useAuthStore } from "src/stores";
 
 export const Register = () => {
   document.title = "Register";
+
+  const { isSubmitting } = useAuthStore((s) => s);
 
   return (
     <>
@@ -54,9 +58,9 @@ export const Register = () => {
             placeholder="Password"
           />
         </div>
-        <button type="submit" className="bg-green-500 hover:bg-green-700 text-white w-full uppercase text-sm font-semibold px-4 py-2 rounded">
-          Register
-        </button>
+        <Button type="submit" isLoading={isSubmitting}>
+          Sign Up
+        </Button>
       </Form>
       <div className="border-t pt-4 text-center">
         <span className="mr-1">Already have an account?</span>

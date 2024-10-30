@@ -5,8 +5,13 @@ export type IConferenceStore = {
   status: boolean;
   chat: IChat | null;
   talk: ITalk | null;
+  isLoading: boolean;
+  talkId?: string | null;
+  isDeletingTalk: boolean;
   isChatOpen: boolean;
-  joiningChat: boolean;
+  isJoiningChat: boolean;
+  isAddingTalk: boolean;
+  isRegistering: boolean;
   message: string | null;
   isAddTalkOpen: boolean;
   conferences: IConference[];
@@ -17,12 +22,17 @@ export type IConferenceStore = {
 const INIT_VALUES = {
   chat: null,
   talk: null,
+  talkId: null,
   status: false,
   message: null,
   conferences: [],
   conference: null,
-  joiningChat: false,
+  isLoading: false,
   isChatOpen: false,
+  isDeletingTalk: false,
+  isJoiningChat: false,
+  isAddingTalk: false,
+  isRegistering: false,
   isAddTalkOpen: false,
 };
 

@@ -9,6 +9,7 @@ export type IAuthStore = {
   logout: () => void;
   user: IUser | null;
   message: string | null;
+  isSubmitting: boolean;
   clearFormState: () => void;
   errors: z.ZodIssue[] | null;
 } & AuthDetails;
@@ -19,6 +20,7 @@ const INIT_VALUES = {
   status: false,
   message: null,
   accessToken: null,
+  isSubmitting: false,
 };
 
 export const useAuthStore = create(

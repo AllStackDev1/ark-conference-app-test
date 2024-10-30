@@ -3,9 +3,10 @@ import { createPortal } from "react-dom";
 import { Fade } from "react-awesome-reveal";
 import { Form } from "react-router-dom";
 import { useConferenceStore } from "src/stores";
+import { Button } from ".";
 
 export function AddTalkModal({ onClose }: { onClose: () => void }) {
-  const conference = useConferenceStore(s=>s.conference)
+  const { conference, isAddingTalk } = useConferenceStore((s) => s);
 
   return createPortal(
     <div className="absolute inset-4">
@@ -25,6 +26,7 @@ export function AddTalkModal({ onClose }: { onClose: () => void }) {
               Add a Talk
             </span>
             <Form method="post">
+              <input hidden value="add-talk-to-conference" name="form-id" />
               <div className="mb-4 md:w-full">
                 <label htmlFor="topic" className="block text-xs mb-1">
                   Topic
@@ -60,14 +62,14 @@ export function AddTalkModal({ onClose }: { onClose: () => void }) {
                   id="datetime"
                 />
               </div>
-              <button
+              <Button
                 type="submit"
-                name="addTalk"
+                name="conference_id"
                 value={conference?.id}
-                className="bg-green-500 hover:bg-green-700 text-white w-full uppercase text-sm font-semibold px-4 py-2 rounded"
+                isLoading={isAddingTalk}
               >
                 Submit
-              </button>
+              </Button>
             </Form>
           </div>
         </div>

@@ -31,11 +31,11 @@ const socket = io(API_BASE_URL, {
 export function ChatModal({ onClose }: { onClose: () => void }) {
   const { user } = useAuthStore((s) => s);
   
-  const { chat, talk, joiningChat } = useConferenceStore((s) => s);
+  const { chat, talk, isJoiningChat } = useConferenceStore((s) => s);
   const [typing, setTyping] = useState("");
 
   const chatHistories = useMemo(() => {
-    if (!chat) return [];
+    if (!chat?.histories?.length) return [];
 
     const dateSeparatorIndexes: number[] = [];
 
@@ -183,7 +183,7 @@ export function ChatModal({ onClose }: { onClose: () => void }) {
                 typingIndicator={
                   typing ? <TypingIndicator content={typing} /> : undefined
                 }
-                loading={joiningChat}
+                loading={isJoiningChat}
                 // loadingMore={true}
                 // loadingMorePosition="bottom"
               >

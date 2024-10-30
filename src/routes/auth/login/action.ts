@@ -28,6 +28,8 @@ export async function action({ request }: ActionFunctionArgs) {
     return;
   }
 
+  useAuthStore.setState({ isSubmitting: true })
+
   try {
     const response = await login(data);
     if (response.accessToken) {
@@ -41,5 +43,7 @@ export async function action({ request }: ActionFunctionArgs) {
     console.log(error)
     useAuthStore.setState({ status: false, message: "Something went wrong. Please try again." })
     return null;
+  } finally {
+    useAuthStore.setState({ isSubmitting: false })
   }
 }

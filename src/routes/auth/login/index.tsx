@@ -1,7 +1,11 @@
 import { Link, Form } from "react-router-dom";
+import { Button } from "src/components";
+import { useAuthStore } from "src/stores";
 
 export const Login = () => {
   document.title = "Login";
+
+  const { isSubmitting } = useAuthStore((s) => s);
 
   return (
     <>
@@ -30,9 +34,7 @@ export const Login = () => {
             placeholder="Password"
           />
         </div>
-        <button type="submit" className="bg-green-500 hover:bg-green-700 text-white w-full uppercase text-sm font-semibold px-4 py-2 rounded">
-          Login
-        </button>
+        <Button type="submit" isLoading={isSubmitting}>Login</Button>
       </Form>
       <div className="border-t pt-4 text-center">
         <span className="mr-1">Don't have an account?</span>
