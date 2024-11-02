@@ -1,10 +1,11 @@
-import { Fade } from "react-awesome-reveal";
-import TopBarProgress from "react-topbar-progress-indicator";
-import { Outlet, useNavigation } from "react-router-dom";
+import "react-toastify/dist/ReactToastify.css";
 
-import { useAuthStore } from "src/stores";
-import { FormReponse } from "src/components";
-import { useEffect } from "react";
+import { Fade } from "react-awesome-reveal";
+import { ToastContainer } from "react-toastify";
+import { Outlet, useNavigation } from "react-router-dom";
+import TopBarProgress from "react-topbar-progress-indicator";
+
+import { useAlert } from "src/hooks";
 
 TopBarProgress.config({
   barColors: {
@@ -16,14 +17,8 @@ TopBarProgress.config({
 
 const Root = () => {
   const navigation = useNavigation();
-  const { status, message, errors, clearFormState } = useAuthStore((state) => state);
 
-  useEffect(() => {
-    if (message || errors) {
-      setTimeout(clearFormState, 5000);
-    }
-  }, [message , errors, clearFormState])
-  
+  useAlert('auth')
 
   return navigation.state == "loading" ? (
     <TopBarProgress />
@@ -38,18 +33,11 @@ const Root = () => {
             {document.title}
           </span>
 
-          {(message || errors) && (
-            <FormReponse
-              status={status}
-              text={message || ""}
-              errors={errors}
-            />
-          )}
-
           <Fade duration={3000}>
             <Outlet />
           </Fade>
         </div>
+        <ToastContainer theme='dark' />
       </div>
     </main>
   );

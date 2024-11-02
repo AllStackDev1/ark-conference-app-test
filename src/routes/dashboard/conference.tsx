@@ -12,7 +12,7 @@ import { PiUserCirclePlusFill } from "react-icons/pi";
 
 import { useAlert } from "src/hooks";
 import { useAuthStore, useConferenceStore } from "src/stores";
-import { ChatModal, AddTalkModal, Button } from "src/components";
+import { ChatModal, AddTalkModal, Button, Loader } from "src/components";
 
 export const Conference = () => {
   const user = useAuthStore((s) => s.user);
@@ -27,7 +27,7 @@ export const Conference = () => {
     isAddTalkOpen,
   } = useConferenceStore((s) => s);
 
-  document.title = "Conferences | " + conference?.theme || "";
+  document.title = "Conferences | " + (conference?.theme || "");
 
   useAlert("conference");
 
@@ -36,9 +36,9 @@ export const Conference = () => {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="h-full space-y-8">
       {!conference || isLoading ? (
-        <div>Loading...</div>
+        <Loader />
       ) : (
         <>
           <div className="">
