@@ -1,11 +1,11 @@
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
 
 import { format } from "date-fns";
-import { io } from "socket.io-client";
 import { createPortal } from "react-dom";
 import { MdClose } from "react-icons/md";
+import { useBeforeUnload } from "react-router-dom";
 import { Fade } from "react-awesome-reveal";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState, useCallback } from "react";
 import {
   Avatar,
   Message,
@@ -19,20 +19,15 @@ import {
 } from "@chatscope/chat-ui-kit-react";
 
 import { useAuthStore, useConferenceStore } from "src/stores";
-import { API_BASE_URL } from "src/utils/constant";
-import { MessageListData } from "src/app.interface";
-
-const socket = io(API_BASE_URL, {
-  query: {
-    authorization: useAuthStore.getState().accessToken,
-  },
-});
+import { IChat, IChatHistory, MessageListData } from "src/app.interface";
+import { useSocketIO } from "src/hooks";
 
 export function ChatModal({ onClose }: { onClose: () => void }) {
-  const { user } = useAuthStore((s) => s);
-  
   const { chat, talk, isJoiningChat } = useConferenceStore((s) => s);
+  const { user, accessToken } = useAuthStore((s) => s);
   const [typing, setTyping] = useState("");
+
+  const socket = useSocketIO(accessToken!);
 
   const chatHistories = useMemo(() => {
     if (!chat?.histories?.length) return [];
@@ -107,49 +102,52 @@ export function ChatModal({ onClose }: { onClose: () => void }) {
     return histories as MessageListData[];
   }, [chat, user]);
 
+  const updateChat = (payload: IChatHistory) => {
+    const _chat = useConferenceStore.getState().chat as IChat;
+    const histories = [..._chat.histories, { ...payload }];
+    useConferenceStore.setState({ chat: { ..._chat, histories } });
+  };
+
+  const disconnectSocket = useCallback(() => {
+    if (chat?.id && socket) {
+      socket.emit("leftChat", chat.id);
+      socket.off("message");
+    }
+  }, [chat?.id, socket]);
+
+  useBeforeUnload(disconnectSocket);
+
   useEffect(() => {
-    if (chat) {
+    if (chat?.id && socket) {
       socket.emit("joinRoom", chat.id);
 
-      socket.on("message", (data) => {
-        const histories = [...chat.histories, { ...data }];
-        useConferenceStore.setState({ chat: { ...chat, histories } });
-      });
+      socket.on("message", updateChat);
 
-      socket.on("userLeft", (data) => {
-        const histories = [...chat.histories, { ...data, type: "left" }];
-        useConferenceStore.setState({ chat: { ...chat, histories } });
-      });
+      socket.on("userLeft", (data) => updateChat({ ...data, type: "left" }));
 
       socket.on("isUserTyping", (data) => {
         setTyping(data.message);
       });
 
-      socket.on("userJoined", (data) => {
-        const histories = [...chat.histories, { ...data, type: "joined" }];
-        useConferenceStore.setState({ chat: { ...chat, histories } });
-      });
+      socket.on("userJoined", (data) =>
+        updateChat({ ...data, type: "joined" })
+      );
     }
 
-    return () => {
-      if (chat) {
-        socket.emit("leaveRoom", chat.id);
-        socket.off("message");
-      }
-    };
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return () => disconnectSocket();
+  }, [chat?.id, socket, disconnectSocket]);
 
   const sendMessage = (message: string) => {
-    if (message && chat) {
+    if (message && chat && socket) {
       socket.emit("message", { chatId: chat.id, message });
       sendTypingState(false);
     }
   };
 
   const sendTypingState = (isTyping: boolean) => {
-    socket.emit("isTyping", { chatId: chat?.id, isTyping });
+    if (chat && socket) {
+      socket.emit("isTyping", { chatId: chat?.id, isTyping });
+    }
   };
 
   return createPortal(
@@ -158,9 +156,7 @@ export function ChatModal({ onClose }: { onClose: () => void }) {
         <div className="relative h-[600px] w-[400px] rounded-t-lg rounded-br-lg">
           <MainContainer
             responsive
-            style={{
-              height: "600px",
-            }}
+            style={{ height: "600px" }}
             className="rounded-t-lg rounded-br-lg"
           >
             <ChatContainer>
@@ -171,7 +167,10 @@ export function ChatModal({ onClose }: { onClose: () => void }) {
                       {talk?.topic}
                     </h2>
                     <button
-                      onClick={onClose}
+                      onClick={() => {
+                        disconnectSocket();
+                        onClose();
+                      }}
                       className="bg-gray-200 opacity-70 hover:opacity-100 shadow-sm rounded-full p-1 w-min"
                     >
                       <MdClose fontSize={30} className="text-gray-600" />
@@ -187,35 +186,37 @@ export function ChatModal({ onClose }: { onClose: () => void }) {
                 // loadingMore={true}
                 // loadingMorePosition="bottom"
               >
-                {chatHistories.filter(d=> !!d).map((data, i) => {
-                  return (
-                    <Fragment key={i + data?.message}>
-                      {data?.type === "message" ? (
-                        <Message
-                          avatarSpacer={
-                            !["single", "last"].includes(data.position)
-                          }
-                          model={{
-                            direction: data.direction,
-                            message: data.message,
-                            position: data.position,
-                          }}
-                        >
-                          {["single", "last"].includes(data.position) && (
-                            <Avatar name={data.sender} src={data.img} />
-                          )}
-                          {["single", "last"].includes(data.position) && (
-                            <Message.Footer>
-                              <span className="text-xs">{data.sentTime}</span>
-                            </Message.Footer>
-                          )}
-                        </Message>
-                      ) : (
-                        <MessageSeparator content={data?.message} />
-                      )}
-                    </Fragment>
-                  );
-                })}
+                {chatHistories
+                  .filter((d) => !!d)
+                  .map((data, i) => {
+                    return (
+                      <Fragment key={i + data?.message}>
+                        {data?.type === "message" ? (
+                          <Message
+                            avatarSpacer={
+                              !["single", "last"].includes(data.position)
+                            }
+                            model={{
+                              direction: data.direction,
+                              message: data.message,
+                              position: data.position,
+                            }}
+                          >
+                            {["single", "last"].includes(data.position) && (
+                              <Avatar name={data.sender} src={data.img} />
+                            )}
+                            {["single", "last"].includes(data.position) && (
+                              <Message.Footer>
+                                <span className="text-xs">{data.sentTime}</span>
+                              </Message.Footer>
+                            )}
+                          </Message>
+                        ) : (
+                          <MessageSeparator content={data?.message} />
+                        )}
+                      </Fragment>
+                    );
+                  })}
               </MessageList>
               <MessageInput
                 placeholder="Type message here"
