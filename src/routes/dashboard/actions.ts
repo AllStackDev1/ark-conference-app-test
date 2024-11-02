@@ -1,5 +1,5 @@
 import z from "zod";
-import { type ActionFunctionArgs } from "react-router-dom";
+import { redirect, type ActionFunctionArgs } from "react-router-dom";
 
 import { useAuthStore, useConferenceStore } from "src/stores";
 import { IAddTalkPayload, IConference } from "src/app.interface";
@@ -8,6 +8,7 @@ import {
   addTalkToConference,
   conferenceRegistration,
   deteleTalkFromConference,
+  logOut,
 } from "src/utils/services";
 
 export const conferenceRegistrationAction = async (
@@ -25,7 +26,7 @@ export const conferenceRegistrationAction = async (
   conferenceRegistration(conferenceId, { userId })
     .then(({ data, message }) => {
       if (data) {
-        useConferenceStore.setState({ status: true, message });
+        useConferenceStore.setState({ status: true, message, conference: data });
       } else if (message) {
         useConferenceStore.setState({ status: false, message });
       }
@@ -48,10 +49,10 @@ export const joinToConversationAction = async (
   talkId: string
 ) => {
   useConferenceStore.setState({ talkId, isJoiningChat: true });
-
-  const attendee = useConferenceStore
-    .getState()
-    .conference?.attendees.find((attendee) => attendee.userId === userId);
+  const conference = useConferenceStore
+  .getState()
+  .conference
+  const attendee = conference?.attendees.find((attendee) => attendee.userId === userId);
 
   if (!attendee?.id) {
     useConferenceStore.setState({
@@ -67,10 +68,11 @@ export const joinToConversationAction = async (
     .then(({ data, message }) => {
       if (data) {
         useConferenceStore.setState({
+          chat: data.chat,
+          conference: data.conference || conference,
           status: true,
           isChatOpen: true,
-          talk: data.conference.talks.find(({ id }) => id === talkId),
-          ...data,
+          talk: (data.conference || conference)?.talks.find(({ id }) => id === talkId),
         });
       } else {
         useConferenceStore.setState({
@@ -123,6 +125,17 @@ export const removeTalkAction = async (talkId: string) => {
 
   return null;
 };
+
+export const logoutAction = async () => {
+  logOut().then(({ message }) => {
+    useAuthStore.setState({ status: true, message });
+  }).finally(() => {
+    useAuthStore.getState().logout();
+    return redirect("/login");
+  });
+
+  return null;
+}
 
 export const addTalkToConferenceAction = async (
   id: string,

@@ -2,9 +2,10 @@ import queryString from "query-string";
 
 import { API_BASE_URL } from "./constant";
 import { useAuthStore } from "src/stores";
+import { refreshAccessToken } from "./services";
 
 const getHeader = (headers?: HeadersInit) => {
-  const accessToken = useAuthStore.getState().accessToken
+  const accessToken = useAuthStore.getState().accessToken;
 
   return {
     "Content-Type": "application/json",
@@ -19,24 +20,28 @@ const asyncFetch = async (
   headers?: HeadersInit,
   body?: BodyInit | null
 ) => {
-  const response = await fetch(url, {
+  const options: RequestInit = {
     body,
     method,
+    credentials: "include",
     headers: getHeader(headers),
-  });
-
-  const result = await response.json()
+  }
+  let response = await fetch(url, options);
 
   if (response.status === 401) {
-    if (result.code === 'TOKEN_EXPIRED') {
-      //TODO: request new accessToken
+    try {
+      // Attempt to refresh the access token
+      const { user, accessToken } = await refreshAccessToken();
+      useAuthStore.setState({ user, accessToken });
+
+      // Retry the original request with the new access token
+      response = await fetch(url, options);
+    } catch (error) {
+      console.error("Token refresh failed:", error);
+      throw error; // Re-throw if refresh fails
     }
-    // You can display an error message to the user or take other actions
-    useAuthStore.setState({ accessToken: null, user: null })
-    window.location.replace("/login");
-  } else {
-    return result;
   }
+  return await response.json();
 };
 
 export const get = async <T>(

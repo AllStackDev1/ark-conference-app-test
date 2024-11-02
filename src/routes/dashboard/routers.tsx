@@ -1,7 +1,11 @@
 import { RouteObject } from "react-router-dom";
 
 import { homeRouteLoader, conferenceRouteLoader } from "./loaders";
-import { homeRouteAction, conferenceRouteAction } from "./actions";
+import {
+  logoutAction,
+  homeRouteAction,
+  conferenceRouteAction,
+} from "./actions";
 
 import Root from "./root";
 
@@ -10,7 +14,18 @@ const dashboardRouters: RouteObject = {
   element: <Root />,
   children: [
     {
-      path: "Home",
+      path: "logout",
+      action: async function ({ request }) {
+        if (request.method !== "POST") {
+          throw new Response("Method Not Allowed", { status: 405 });
+        }
+      
+        return logoutAction();
+      },
+      element: <div></div>,
+    },
+    {
+      path: "home",
       shouldRevalidate: () => false,
       lazy: async () => {
         const { Home } = await import("./home");

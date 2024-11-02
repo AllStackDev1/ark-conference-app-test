@@ -1,9 +1,11 @@
 import "react-toastify/dist/ReactToastify.css";
+
 import cn from "classnames";
 import { Fade } from "react-awesome-reveal";
 import { ToastContainer } from "react-toastify";
+import { MdOutlineLogout } from "react-icons/md";
 import TopBarProgress from "react-topbar-progress-indicator";
-import { NavLink, Outlet, useNavigation, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useNavigation, useLocation, Form } from "react-router-dom";
 
 import { useAuthStore } from "src/stores";
 
@@ -49,15 +51,22 @@ const Root = () => {
     >
       <div className="hidden xl:block xl:col-span-1 relative">
         <aside className="p-4 space-y-10">
-          <div className="flex items-center py-3 px-4 space-x-2 border border-primary-600 rounded-lg w-">
-            <img
-              src={`https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}&background=random`}
-              alt={user?.firstName + " " + user?.lastName}
-              className="w-8 h-8 rounded-full"
-            />
-            <span className="text-xs">
-              {user?.firstName} {user?.lastName}
-            </span>
+          <div className="flex items-center py-3 px-4 justify-between border border-primary-600 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <img
+                src={`https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}&background=random`}
+                alt={user?.firstName + " " + user?.lastName}
+                className="w-8 h-8 rounded-full"
+              />
+              <span className="text-xs">
+                {user?.firstName} {user?.lastName}
+              </span>
+            </div>
+            <Form action="/logout" method="post">
+              <button type="submit" className="flex items-center justify-center bg-red-600 text-white shadow-md rounded-full w-8 h-8">
+                <MdOutlineLogout fontSize={18} />
+              </button>
+            </Form>
           </div>
           <ul className="space-y-2 pl-3">
             {menuLinks.map((item) => (
@@ -91,11 +100,11 @@ const Root = () => {
           <TopBarProgress />
         ) : (
           <div className="absolute inset-4 rounded-xl shadow-md border-[0.5px] bg-white border-gray-200 overflow-hidden">
-            <div className="max-h-full overflow-auto">
+            <div className="h-full overflow-auto">
               <Fade
                 duration={3000}
                 key={location.pathname}
-                className="p-4 xl:p-8"
+                className="h-full p-4 xl:p-8"
               >
                 <Outlet />
               </Fade>
